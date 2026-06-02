@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>أكيناتور - لعبة التخمين السحرية</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            width: 100%;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #1a0033 0%, #2d0052 50%, #1a0033 100%);
+            font-family: 'Arial', sans-serif;
+            overflow-x: hidden;
+            padding: 20px;
+        }
+
+        #gameContainer {
+            position: relative;
+            width: 100%;
+            max-width: 700px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            padding: 40px 30px;
+            min-height: 600px;
+        }
+
+        /* شخصية أكيناتور السحرية */
+        #character {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .character-head {
+            width: 150px;
+            height: 150px;
+            margin: 0 auto 15px;
+            position: relative;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+
+        /* رأس أكيناتور */
+        .head {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+            border-radius: 50%;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            border: 3px solid #1565C0;
+        }
+
+        /* العينان */
+        .eye {
+            position: absolute;
+            width: 25px;
+            height: 35px;
+            background: white;
+            border-radius: 50%;
+            top: 40px;
+        }
+
+        .eye.left {
+            left: 35px;
+        }
+
+        .eye.right {
+            right: 35px;
+        }
+
+        .pupil {
+            width: 12px;
+            height: 12px;
+            background: #000;
+            border-radius: 50%;
+            position: absolute;
+            top: 10px;
+            left: 6px;
+            animation: blink-pupil 0.3s ease-in-out 2s infinite;
+        }
+
+        @keyframes blink-pupil {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(0.5); }
+        }
+
+        /* الفم */
+        .mouth {
+            position: absolute;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 30px;
+            height: 20px;
+            border: 3px solid #FFD700;
+            border-top: none;
+            border-radius: 0 0 30px 30px;
+        }
+
+        /* الشرارات السحرية */
+        .sparkle {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: #FFD700;
+            border-radius: 50%;
+            animation: sparkle 1s ease-in-out infinite;
+        }
+
+        .sparkle:nth-child(1) {
+            top: 20px;
+            left: 20px;
+            animation-delay: 0s;
+        }
+
+        .sparkle:nth-child(2) {
+            top: 20px;
+            right: 20px;
+            animation-delay: 0.3s;
+        }
+
+        .sparkle:nth-child(3) {
+            bottom: 20px;
+            left: 20px;
+            animation-delay: 0.6s;
+        }
+
+        .sparkle:nth-child(4) {
+            bottom: 20px;
+            right: 20px;
+            animation-delay: 0.9s;
+        }
+
+        @keyframes sparkle {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.3; transform: scale(0.5); }
+        }
+
+        /* نص الترحيب */
+        .greeting {
+            text-align: center;
+            color: white;
+            font-size: 18px;
+            margin-bottom: 20px;
+            font-weight: bold;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        /* منطقة الأسئلة */
+        #questionArea {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        #question {
+            font-size: 22px;
+            color: #333;
+            margin-bottom: 25px;
+            text-align: center;
+            font-weight: bold;
+            min-height: 60px;
+            line-height: 1.4;
+        }
+
+        /* شريط التقدم */
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50 0%, #8BC34A 100%);
+            transition: width 0.3s ease;
+            border-radius: 4px;
+        }
+
+        .progress-text {
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 15px;
+        }
+
+        /* أزرار الإجابة */
+        .answer-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .answer-btn {
+            padding: 15px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: white;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+
+        .yes-btn {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+        }
+
+        .yes-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
+        }
+
+        .no-btn {
+            background: linear-gradient(135deg, #f44336 0%, #da190b 100%);
+        }
+
+        .no-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(244, 67, 54, 0.4);
+        }
+
+        .maybe-btn {
+            background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
+            grid-column: 1;
+        }
+
+        .maybe-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 152, 0, 0.4);
+        }
+
+        .skip-btn {
+            background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+            grid-column: 2;
+        }
+
+        .skip-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(33, 150, 243, 0.4);
+        }
+
+        .answer-btn:active {
+            transform: translateY(0px);
+        }
+
+        /* منطقة التخمين */
+        #guessArea {
+            display: none;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .guess-title {
+            font-size: 20px;
+            color: #333;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        .guess-name {
+            font-size: 32px;
+            color: #667eea;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        .guess-emoji {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+
+        .guess-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .correct-btn {
+            padding: 15px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .correct-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
+        }
+
+        .wrong-btn {
+            padding: 15px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #f44336 0%, #da190b 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .wrong-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(244, 67, 54, 0.4);
+        }
+
+        /* منطقة النهاية */
+        #endArea {
+            display: none;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .end-emoji {
+            font-size: 60px;
+            margin-bottom: 20px;
+        }
+
+        .end-message {
+            font-size: 20px;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .restart-btn {
+            padding: 15px 40px;
+            font-size: 18px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 15px;
+        }
+
+        .restart-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .info-text {
+            font-size: 14px;
+            color: #999;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        @media (max-width: 600px) {
+            #gameContainer {
+                padding: 25px 15px;
+            }
+
+            .character-head {
+                width: 120px;
+                height: 120px;
+            }
+
+            #question {
+                font-size: 18px;
+            }
+
+            .answer-buttons {
+                grid-template-columns: 1fr;
+            }
+
+            .maybe-btn,
+            .skip-btn {
+                grid-column: 1;
+            }
+
+            .guess-name {
+                font-size: 24px;
+            }
+
+            .guess-emoji {
+                font-size: 60px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <!-- شخصية أكيناتور -->
+        <div id="character">
+            <div class="character-head">
+                <div class="head">
+                    <div class="eye left">
+                        <div class="pupil"></div>
+                    </div>
+                    <div class="eye right">
+                        <div class="pupil"></div>
+                    </div>
+                    <div class="mouth"></div>
+                    <div class="sparkle"></div>
+                    <div class="sparkle"></div>
+                    <div class="sparkle"></div>
+                    <div class="sparkle"></div>
+                </div>
+            </div>
+            <div class="greeting">فكر في شخصية وسأحاول تخمينها! 🧞‍♂️</div>
+        </div>
+
+        <!-- منطقة الأسئلة -->
+        <div id="questionArea">
+            <div class="progress-text">
+                السؤال <span id="questionNum">1</span> من <span id="totalQuestions">15</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div id="question"></div>
+            <div class="answer-buttons">
+                <button class="answer-btn yes-btn" onclick="answer('yes')">نعم ✓</button>
+                <button class="answer-btn no-btn" onclick="answer('no')">لا ✗</button>
+                <button class="answer-btn maybe-btn" onclick="answer('maybe')">ربما 🤔</button>
+                <button class="answer-btn skip-btn" onclick="answer('skip')">تخطي ⊲</button>
+            </div>
+        </div>
+
+        <!-- منطقة التخمين -->
+        <div id="guessArea">
+            <div class="guess-title">هل أنت تفكر في...</div>
+            <div class="guess-emoji" id="guessEmoji">🤔</div>
+            <div class="guess-name" id="guessName">شخصية</div>
+            <div class="guess-buttons">
+                <button class="correct-btn" onclick="correctGuess()">أحسنت! ✓</button>
+                <button class="wrong-btn" onclick="wrongGuess()">لا، جرب مرة أخرى ✗</button>
+            </div>
+        </div>
+
+        <!-- منطقة النهاية -->
+        <div id="endArea">
+            <div class="end-emoji">🎉</div>
+            <div class="end-message" id="endMessage"></div>
+            <button class="restart-btn" onclick="restartGame()">لعب مرة أخرى</button>
+        </div>
+
+        <div class="info-text" id="infoText"></div>
+    </div>
+
+    <script>
+        // قاعدة بيانات الشخصيات
+        const characters = [
+            { name: 'سوبرمان', emoji: '🧑‍🚀', traits: { real: true, superpowers: true, american: true, male: true, hero: true } },
+            { name: 'بات مان', emoji: '🦇', traits: { real: false, superpowers: false, american: true, male: true, hero: true } },
+            { name: 'وندر وومان', emoji: '👩‍🦸', traits: { real: false, superpowers: true, american: true, male: false, hero: true } },
+            { name: 'سبايدر مان', emoji: '🕷️', traits: { real: true, superpowers: true, american: true, male: true, hero: true } },
+            { name: 'الهالك', emoji: '💚', traits: { real: true, superpowers: true, american: true, male: true, hero: true } },
+            { name: 'ثور', emoji: '⚡', traits: { real: false, superpowers: true, american: false, male: true, hero: true } },
+            { name: 'آيرون مان', emoji: '🦾', traits: { real: true, superpowers: false, american: true, male: true, hero: true } },
+            { name: 'الرجل الأحمر', emoji: '🔴', traits: { real: true, superpowers: false, american: true, male: true, hero: true } },
+            { name: 'الشبح الأبيض', emoji: '👻', traits: { real: false, superpowers: false, american: false, male: true, villain: true } },
+            { name: 'جوكر', emoji: '🤡', traits: { real: false, superpowers: false, american: true, male: true, villain: true } },
+            { name: 'ليكس لوثر', emoji: '🧠', traits: { real: true, superpowers: false, american: true, male: true, villain: true } },
+            { name: 'ديفيد بيكهام', emoji: '⚽', traits: { real: true, superpowers: false, american: false, male: true, athlete: true } },
+            { name: 'ليونيل ميسي', emoji: '⚽', traits: { real: true, superpowers: false, american: false, male: true, athlete: true } },
+            { name: 'كريستيانو رونالدو', emoji: '⚽', traits: { real: true, superpowers: false, american: false, male: true, athlete: true } },
+            { name: 'ماجيك جونسون', emoji: '🏀', traits: { real: true, superpowers: false, american: true, male: true, athlete: true } }
+        ];
+
+        const questions = [
+            { text: 'هل هذه الشخصية حقيقية (موجودة في الحقيقة)؟', key: 'real' },
+            { text: 'هل لديها قوى خارقة؟', key: 'superpowers' },
+            { text: 'هل هي أمريكية؟', key: 'american' },
+            { text: 'هل هي ذكر (رجل)؟', key: 'male' },
+            { text: 'هل هي بطل خير؟', key: 'hero' },
+            { text: 'هل هي شرير؟', key: 'villain' },
+            { text: 'هل هي رياضية؟', key: 'athlete' }
+        ];
+
+        let currentQuestion = 0;
+        let possibleCharacters = [...characters];
+        let answers = {};
+        let gameState = 'playing'; // playing, guessing, ended
+
+        const QUESTIONS_LIMIT = 15;
+
+        function startGame() {
+            currentQuestion = 0;
+            possibleCharacters = [...characters];
+            answers = {};
+            gameState = 'playing';
+            document.getElementById('questionArea').style.display = 'block';
+            document.getElementById('guessArea').style.display = 'none';
+            document.getElementById('endArea').style.display = 'none';
+            showNextQuestion();
+        }
+
+        function answer(response) {
+            if (gameState !== 'playing') return;
+
+            const question = questions[currentQuestion];
+            answers[question.key] = response;
+
+            // تصفية الشخصيات بناءً على الإجابة
+            if (response === 'yes') {
+                possibleCharacters = possibleCharacters.filter(char => char.traits[question.key] === true);
+            } else if (response === 'no') {
+                possibleCharacters = possibleCharacters.filter(char => char.traits[question.key] === false);
+            }
+            // إذا كانت الإجابة "ربما" أو "تخطي" فلا نصفي
+
+            currentQuestion++;
+
+            // تحديث شريط التقدم
+            updateProgress();
+
+            // التحقق من إمكانية التخمين
+            if (possibleCharacters.length === 1 || currentQuestion >= QUESTIONS_LIMIT) {
+                makeGuess();
+            } else {
+                showNextQuestion();
+            }
+        }
+
+        function showNextQuestion() {
+            if (currentQuestion < questions.length) {
+                const question = questions[currentQuestion];
+                document.getElementById('question').textContent = question.text;
+                document.getElementById('questionNum').textContent = currentQuestion + 1;
+                document.getElementById('totalQuestions').textContent = QUESTIONS_LIMIT;
+            }
+        }
+
+        function updateProgress() {
+            const progress = (currentQuestion / QUESTIONS_LIMIT) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+        }
+
+        function makeGuess() {
+            gameState = 'guessing';
+            document.getElementById('questionArea').style.display = 'none';
+            document.getElementById('guessArea').style.display = 'block';
+
+            if (possibleCharacters.length > 0) {
+                const character = possibleCharacters[0];
+                document.getElementById('guessName').textContent = character.name;
+                document.getElementById('guessEmoji').textContent = character.emoji;
+            } else {
+                document.getElementById('guessName').textContent = 'شخصية غامضة جداً!';
+                document.getElementById('guessEmoji').textContent = '🤷‍♂️';
+            }
+        }
+
+        function correctGuess() {
+            gameState = 'ended';
+            document.getElementById('guessArea').style.display = 'none';
+            document.getElementById('endArea').style.display = 'block';
+            document.getElementById('endMessage').textContent = 'رائع! لقد خمنت الشخصية بنجاح! 🎉';
+        }
+
+        function wrongGuess() {
+            // إزالة الشخصية الحالية من القائمة
+            possibleCharacters.shift();
+
+            if (possibleCharacters.length > 0 && currentQuestion < QUESTIONS_LIMIT) {
+                // محاولة تخمين أخرى
+                makeGuess();
+            } else {
+                // انتهت اللعبة
+                gameState = 'ended';
+                document.getElementById('guessArea').style.display = 'none';
+                document.getElementById('endArea').style.display = 'block';
+                document.getElementById('endMessage').textContent = 'عذراً! لم أستطع تخمين الشخصية. أخبرني من كانت! 🤔';
+            }
+        }
+
+        function restartGame() {
+            startGame();
+        }
+
+        // بدء اللعبة
+        startGame();
+    </script>
+</body>
+</html>
