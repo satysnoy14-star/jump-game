@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لعبة القفز الممتعة</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+        }
+
+        #gameContainer {
+            position: relative;
+            width: 400px;
+            height: 600px;
+            background: linear-gradient(to bottom, #87CEEB, #E0F6FF);
+            border: 3px solid #333;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        #player {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background: #FF6B6B;
+            border-radius: 50%;
+            bottom: 50px;
+            left: 185px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        .platform {
+            position: absolute;
+            width: 80px;
+            height: 15px;
+            background: linear-gradient(to bottom, #4CAF50, #45a049);
+            border-radius: 7px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            border: 2px solid #2d8f2d;
+        }
+
+        .platform.moving {
+            background: linear-gradient(to bottom, #2196F3, #1976D2);
+            border-color: #0d47a1;
+        }
+
+        .platform.trampoline {
+            background: linear-gradient(to bottom, #FFD700, #FFA500);
+            border-color: #FF8C00;
+        }
+
+        .platform.ice {
+            background: linear-gradient(to bottom, #B0E0E6, #87CEEB);
+            border-color: #4682B4;
+        }
+
+        .enemy {
+            position: absolute;
+            width: 25px;
+            height: 25px;
+            background: #FF00FF;
+            border-radius: 50%;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        .coin {
+            position: absolute;
+            width: 15px;
+            height: 15px;
+            background: #FFD700;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            animation: spin 0.5s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        #gameOver {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 40px;
+            border-radius: 10px;
+            text-align: center;
+            z-index: 100;
+            min-width: 250px;
+        }
+
+        #gameOver h1 {
+            font-size: 32px;
+            margin-bottom: 20px;
+        }
+
+        #gameOver p {
+            font-size: 20px;
+            margin: 10px 0;
+        }
+
+        #gameOver button {
+            margin-top: 20px;
+            padding: 10px 30px;
+            font-size: 18px;
+            background: #FF6B6B;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        #gameOver button:hover {
+            background: #FF5252;
+        }
+
+        #ui {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: #333;
+            font-weight: bold;
+            font-size: 18px;
+            z-index: 10;
+            text-align: right;
+        }
+
+        .score-item {
+            margin: 5px 0;
+        }
+
+        #startScreen {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 200;
+            flex-direction: column;
+            text-align: center;
+        }
+
+        #startScreen h1 {
+            color: #FFD700;
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+
+        #startScreen p {
+            color: white;
+            font-size: 18px;
+            margin: 10px 0;
+        }
+
+        #startScreen button {
+            margin-top: 30px;
+            padding: 15px 40px;
+            font-size: 20px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        #startScreen button:hover {
+            background: #45a049;
+        }
+
+        .instructions {
+            color: #FFD700;
+            font-size: 14px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <div id="startScreen">
+            <h1>🎮 لعبة القفز</h1>
+            <p>اقفز على المنصات وتجنب الأعداء!</p>
+            <p>اجمع النقود للحصول على نقاط إضافية</p>
+            <p class="instructions">استخدم الأسهم ← → للتحكم</p>
+            <button onclick="startGame()">ابدأ اللعبة</button>
+        </div>
+
+        <div id="ui">
+            <div class="score-item">النقاط: <span id="score">0</span></div>
+            <div class="score-item">المستوى: <span id="level">1</span></div>
+            <div class="score-item">الارتفاع: <span id="height">0</span></div>
+        </div>
+
+        <div id="player"></div>
+
+        <div id="gameOver">
+            <h1>انتهت اللعبة! 💀</h1>
+            <p>النقاط النهائية: <span id="finalScore">0</span></p>
+            <p>أعلى ارتفاع: <span id="maxHeight">0</span></p>
+            <button onclick="location.reload()">لعب مرة أخرى</button>
+        </div>
+    </div>
+
+    <script>
+        const gameContainer = document.getElementById('gameContainer');
+        const player = document.getElementById('player');
+        const gameOverScreen = document.getElementById('gameOver');
+        const startScreen = document.getElementById('startScreen');
+        const scoreDisplay = document.getElementById('score');
+        const levelDisplay = document.getElementById('level');
+        const heightDisplay = document.getElementById('height');
+
+        let gameActive = false;
+        let playerX = 185;
+        let playerY = 550;
+        let playerVelocityX = 0;
+        let playerVelocityY = 0;
+        let score = 0;
+        let level = 1;
+        let maxHeight = 0;
+        let platforms = [];
+        let enemies = [];
+        let coins = [];
+        let gameSpeed = 5;
+        let platformSpacing = 70;
+
+        const GRAVITY = 0.6;
+        const JUMP_STRENGTH = 12;
+        const MOVE_SPEED = 5;
+        const CONTAINER_WIDTH = 400;
+        const CONTAINER_HEIGHT = 600;
+        const PLAYER_SIZE = 30;
+
+        class Platform {
+            constructor(x, y, type = 'normal') {
+                this.x = x;
+                this.y = y;
+                this.width = 80;
+                this.height = 15;
+                this.type = type;
+                this.direction = Math.random() > 0.5 ? 1 : -1;
+                this.speed = type === 'moving' ? 2 : 0;
+                this.element = document.createElement('div');
+                this.element.className = 'platform ' + type;
+                this.element.style.left = x + 'px';
+                this.element.style.top = y + 'px';
+                gameContainer.appendChild(this.element);
+            }
+
+            update() {
+                if (this.type === 'moving') {
+                    this.x += this.speed * this.direction;
+                    if (this.x <= 0 || this.x + this.width >= CONTAINER_WIDTH) {
+                        this.direction *= -1;
+                    }
+                    this.element.style.left = this.x + 'px';
+                }
+
+                if (this.type === 'ice') {
+                    this.element.style.opacity = 0.7 + Math.sin(Date.now() / 200) * 0.3;
+                }
+            }
+
+            draw() {
+                this.element.style.left = this.x + 'px';
+                this.element.style.top = this.y + 'px';
+            }
+
+            remove() {
+                this.element.remove();
+            }
+        }
+
+        class Enemy {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.width = 25;
+                this.height = 25;
+                this.direction = Math.random() > 0.5 ? 1 : -1;
+                this.speed = 2 + level * 0.5;
+                this.element = document.createElement('div');
+                this.element.className = 'enemy';
+                this.element.style.left = x + 'px';
+                this.element.style.top = y + 'px';
+                gameContainer.appendChild(this.element);
+            }
+
+            update() {
+                this.x += this.speed * this.direction;
+                if (this.x <= 0 || this.x + this.width >= CONTAINER_WIDTH) {
+                    this.direction *= -1;
+                }
+                this.element.style.left = this.x + 'px';
+            }
+
+            remove() {
+                this.element.remove();
+            }
+        }
+
+        class Coin {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.width = 15;
+                this.height = 15;
+                this.collected = false;
+                this.element = document.createElement('div');
+                this.element.className = 'coin';
+                this.element.style.left = x + 'px';
+                this.element.style.top = y + 'px';
+                gameContainer.appendChild(this.element);
+            }
+
+            update() {
+                this.element.style.top = this.y + 'px';
+            }
+
+            remove() {
+                this.element.remove();
+            }
+        }
+
+        function startGame() {
+            startScreen.style.display = 'none';
+            gameActive = true;
+            gameOverScreen.style.display = 'none';
+            score = 0;
+            level = 1;
+            playerY = 550;
+            playerVelocityY = 0;
+            maxHeight = 0;
+
+            // مسح جميع العناصر
+            platforms.forEach(p => p.remove());
+            enemies.forEach(e => e.remove());
+            coins.forEach(c => c.remove());
+            platforms = [];
+            enemies = [];
+            coins = [];
+
+            // إنشاء المنصات الأولية
+            for (let i = 0; i < 15; i++) {
+                const y = CONTAINER_HEIGHT - i * platformSpacing;
+                const x = Math.random() * (CONTAINER_WIDTH - 80);
+                const rand = Math.random();
+                let type = 'normal';
+                if (rand > 0.7) type = 'moving';
+                else if (rand > 0.5) type = 'trampoline';
+                else if (rand > 0.3) type = 'ice';
+
+                platforms.push(new Platform(x, y, type));
+
+                if (Math.random() > 0.7) {
+                    coins.push(new Coin(x + 30, y - 30));
+                }
+            }
+
+            gameLoop();
+        }
+
+        function handleInput(e) {
+            if (!gameActive) return;
+
+            if (e.key === 'ArrowLeft') {
+                playerVelocityX = -MOVE_SPEED;
+            } else if (e.key === 'ArrowRight') {
+                playerVelocityX = MOVE_SPEED;
+            }
+        }
+
+        function handleInputUp(e) {
+            if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+                playerVelocityX = 0;
+            }
+        }
+
+        function updatePlayer() {
+            playerX += playerVelocityX;
+            playerVelocityY += GRAVITY;
+            playerY += playerVelocityY;
+
+            // التحكم بحدود اللعبة الأفقية
+            if (playerX < 0) playerX = 0;
+            if (playerX + PLAYER_SIZE > CONTAINER_WIDTH) playerX = CONTAINER_WIDTH - PLAYER_SIZE;
+
+            // حلقة الشاشة العمودية
+            if (playerY > CONTAINER_HEIGHT) {
+                gameOver();
+            }
+
+            player.style.left = playerX + 'px';
+            player.style.top = playerY + 'px';
+
+            // تحديث الارتفاع
+            let currentHeight = Math.max(0, Math.round((CONTAINER_HEIGHT - playerY) / 10));
+            heightDisplay.textContent = currentHeight;
+            maxHeight = Math.max(maxHeight, currentHeight);
+        }
+
+        function checkCollisions() {
+            // فحص الاصطدام مع المنصات
+            platforms.forEach(platform => {
+                if (playerVelocityY > 0 &&
+                    playerY + PLAYER_SIZE >= platform.y &&
+                    playerY + PLAYER_SIZE <= platform.y + platform.height + 5 &&
+                    playerX + PLAYER_SIZE > platform.x &&
+                    playerX < platform.x + platform.width) {
+
+                    if (platform.type === 'trampoline') {
+                        playerVelocityY = -JUMP_STRENGTH * 1.5;
+                        score += 5;
+                    } else if (platform.type === 'ice') {
+                        playerVelocityY = -JUMP_STRENGTH * 0.7;
+                        playerVelocityX *= 1.2;
+                    } else {
+                        playerVelocityY = -JUMP_STRENGTH;
+                    }
+                }
+            });
+
+            // فحص الاصطدام مع الأعداء
+            enemies.forEach(enemy => {
+                if (playerX < enemy.x + enemy.width &&
+                    playerX + PLAYER_SIZE > enemy.x &&
+                    playerY < enemy.y + enemy.height &&
+                    playerY + PLAYER_SIZE > enemy.y) {
+                    gameOver();
+                }
+            });
+
+            // فحص جمع النقود
+            coins.forEach(coin => {
+                if (!coin.collected &&
+                    playerX < coin.x + coin.width &&
+                    playerX + PLAYER_SIZE > coin.x &&
+                    playerY < coin.y + coin.height &&
+                    playerY + PLAYER_SIZE > coin.y) {
+                    coin.collected = true;
+                    coin.remove();
+                    score += 10;
+                }
+            });
+        }
+
+        function updatePlatforms() {
+            platforms.forEach(platform => {
+                platform.update();
+
+                // إزالة المنصات البعيدة جداً
+                if (platform.y > CONTAINER_HEIGHT + 50) {
+                    platform.remove();
+                    platforms = platforms.filter(p => p !== platform);
+
+                    // إضافة منصة جديدة في الأعلى
+                    const newY = Math.min(...platforms.map(p => p.y)) - platformSpacing;
+                    const newX = Math.random() * (CONTAINER_WIDTH - 80);
+                    const rand = Math.random();
+                    let type = 'normal';
+                    if (rand > 0.7) type = 'moving';
+                    else if (rand > 0.5) type = 'trampoline';
+                    else if (rand > 0.3) type = 'ice';
+
+                    platforms.push(new Platform(newX, newY, type));
+
+                    if (Math.random() > 0.7) {
+                        coins.push(new Coin(newX + 30, newY - 30));
+                    }
+
+                    // زيادة الصعوبة
+                    level = Math.floor(score / 50) + 1;
+                    if (level > 1 && Math.random() > 0.8) {
+                        const enemyX = Math.random() * (CONTAINER_WIDTH - 25);
+                        enemies.push(new Enemy(enemyX, newY - 80));
+                    }
+                }
+            });
+
+            // تحديث الأعداء
+            enemies.forEach(enemy => {
+                enemy.update();
+            });
+
+            // إزالة الأعداء البعيدة
+            enemies = enemies.filter(e => {
+                if (e.y > CONTAINER_HEIGHT + 50) {
+                    e.remove();
+                    return false;
+                }
+                return true;
+            });
+
+            // تحديث النقود
+            coins.forEach(coin => {
+                coin.update();
+            });
+
+            coins = coins.filter(c => {
+                if (c.y > CONTAINER_HEIGHT + 50) {
+                    c.remove();
+                    return false;
+                }
+                return true;
+            });
+        }
+
+        function updateUI() {
+            scoreDisplay.textContent = score;
+            levelDisplay.textContent = level;
+        }
+
+        function gameOver() {
+            gameActive = false;
+            gameOverScreen.style.display = 'flex';
+            document.getElementById('finalScore').textContent = score;
+            document.getElementById('maxHeight').textContent = maxHeight;
+        }
+
+        function gameLoop() {
+            if (!gameActive) return;
+
+            updatePlayer();
+            checkCollisions();
+            updatePlatforms();
+            updateUI();
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        document.addEventListener('keydown', handleInput);
+        document.addEventListener('keyup', handleInputUp);
+    </script>
+</body>
+</html>
