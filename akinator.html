@@ -91,12 +91,6 @@
             position: absolute;
             top: 10px;
             left: 6px;
-            animation: blink-pupil 0.3s ease-in-out 2s infinite;
-        }
-
-        @keyframes blink-pupil {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(0.5); }
         }
 
         /* الفم */
@@ -439,17 +433,17 @@
         <!-- منطقة الأسئلة -->
         <div id="questionArea">
             <div class="progress-text">
-                السؤال <span id="questionNum">1</span> من <span id="totalQuestions">15</span>
+                السؤال <span id="questionNum">1</span> من <span id="totalQuestions">10</span>
             </div>
             <div class="progress-bar">
                 <div class="progress-fill" id="progressFill"></div>
             </div>
             <div id="question"></div>
             <div class="answer-buttons">
-                <button class="answer-btn yes-btn" onclick="answer('yes')">نعم ✓</button>
-                <button class="answer-btn no-btn" onclick="answer('no')">لا ✗</button>
-                <button class="answer-btn maybe-btn" onclick="answer('maybe')">ربما 🤔</button>
-                <button class="answer-btn skip-btn" onclick="answer('skip')">تخطي ⊲</button>
+                <button class="answer-btn yes-btn" onclick="answerQuestion('yes')">نعم ✓</button>
+                <button class="answer-btn no-btn" onclick="answerQuestion('no')">لا ✗</button>
+                <button class="answer-btn maybe-btn" onclick="answerQuestion('maybe')">ربما 🤔</button>
+                <button class="answer-btn skip-btn" onclick="answerQuestion('skip')">تخطي ⊲</button>
             </div>
         </div>
 
@@ -468,7 +462,7 @@
         <div id="endArea">
             <div class="end-emoji">🎉</div>
             <div class="end-message" id="endMessage"></div>
-            <button class="restart-btn" onclick="restartGame()">لعب مرة أخرى</button>
+            <button class="restart-btn" onclick="location.reload()">لعب مرة أخرى</button>
         </div>
 
         <div class="info-text" id="infoText"></div>
@@ -477,90 +471,72 @@
     <script>
         // قاعدة بيانات الشخصيات
         const characters = [
-            { name: 'سوبرمان', emoji: '🧑‍🚀', traits: { real: true, superpowers: true, american: true, male: true, hero: true } },
-            { name: 'بات مان', emoji: '🦇', traits: { real: false, superpowers: false, american: true, male: true, hero: true } },
-            { name: 'وندر وومان', emoji: '👩‍🦸', traits: { real: false, superpowers: true, american: true, male: false, hero: true } },
-            { name: 'سبايدر مان', emoji: '🕷️', traits: { real: true, superpowers: true, american: true, male: true, hero: true } },
-            { name: 'الهالك', emoji: '💚', traits: { real: true, superpowers: true, american: true, male: true, hero: true } },
-            { name: 'ثور', emoji: '⚡', traits: { real: false, superpowers: true, american: false, male: true, hero: true } },
-            { name: 'آيرون مان', emoji: '🦾', traits: { real: true, superpowers: false, american: true, male: true, hero: true } },
-            { name: 'الرجل الأحمر', emoji: '🔴', traits: { real: true, superpowers: false, american: true, male: true, hero: true } },
-            { name: 'الشبح الأبيض', emoji: '👻', traits: { real: false, superpowers: false, american: false, male: true, villain: true } },
-            { name: 'جوكر', emoji: '🤡', traits: { real: false, superpowers: false, american: true, male: true, villain: true } },
-            { name: 'ليكس لوثر', emoji: '🧠', traits: { real: true, superpowers: false, american: true, male: true, villain: true } },
-            { name: 'ديفيد بيكهام', emoji: '⚽', traits: { real: true, superpowers: false, american: false, male: true, athlete: true } },
-            { name: 'ليونيل ميسي', emoji: '⚽', traits: { real: true, superpowers: false, american: false, male: true, athlete: true } },
-            { name: 'كريستيانو رونالدو', emoji: '⚽', traits: { real: true, superpowers: false, american: false, male: true, athlete: true } },
-            { name: 'ماجيك جونسون', emoji: '🏀', traits: { real: true, superpowers: false, american: true, male: true, athlete: true } }
+            { name: 'سوبرمان', emoji: '🧑‍🚀', traits: { real: false, superpowers: true, american: true, male: true } },
+            { name: 'بات مان', emoji: '🦇', traits: { real: false, superpowers: false, american: true, male: true } },
+            { name: 'وندر وومان', emoji: '👩‍🦸', traits: { real: false, superpowers: true, american: true, male: false } },
+            { name: 'سبايدر مان', emoji: '🕷️', traits: { real: false, superpowers: true, american: true, male: true } },
+            { name: 'الهالك', emoji: '💚', traits: { real: false, superpowers: true, american: true, male: true } },
+            { name: 'جوكر', emoji: '🤡', traits: { real: false, superpowers: false, american: true, male: true } },
+            { name: 'ليونيل ميسي', emoji: '⚽', traits: { real: true, superpowers: false, american: false, male: true } },
+            { name: 'كريستيانو رونالدو', emoji: '⚽', traits: { real: true, superpowers: false, american: false, male: true } },
+            { name: 'آيرون مان', emoji: '🦾', traits: { real: false, superpowers: false, american: true, male: true } },
+            { name: 'ثور', emoji: '⚡', traits: { real: false, superpowers: true, american: false, male: true } }
         ];
 
         const questions = [
-            { text: 'هل هذه الشخصية حقيقية (موجودة في الحقيقة)؟', key: 'real' },
+            { text: 'هل هذه الشخصية حقيقية؟', key: 'real' },
             { text: 'هل لديها قوى خارقة؟', key: 'superpowers' },
             { text: 'هل هي أمريكية؟', key: 'american' },
-            { text: 'هل هي ذكر (رجل)؟', key: 'male' },
-            { text: 'هل هي بطل خير؟', key: 'hero' },
-            { text: 'هل هي شرير؟', key: 'villain' },
-            { text: 'هل هي رياضية؟', key: 'athlete' }
+            { text: 'هل هي ذكر (رجل)؟', key: 'male' }
         ];
 
         let currentQuestion = 0;
-        let possibleCharacters = [...characters];
-        let answers = {};
-        let gameState = 'playing'; // playing, guessing, ended
+        let possibleCharacters = [];
+        let gameState = 'playing';
 
-        const QUESTIONS_LIMIT = 15;
-
-        function startGame() {
-            currentQuestion = 0;
+        function initGame() {
             possibleCharacters = [...characters];
-            answers = {};
+            currentQuestion = 0;
             gameState = 'playing';
             document.getElementById('questionArea').style.display = 'block';
             document.getElementById('guessArea').style.display = 'none';
             document.getElementById('endArea').style.display = 'none';
-            showNextQuestion();
+            showQuestion();
         }
 
-        function answer(response) {
+        function showQuestion() {
+            if (currentQuestion < questions.length) {
+                const question = questions[currentQuestion];
+                document.getElementById('question').textContent = question.text;
+                document.getElementById('questionNum').textContent = currentQuestion + 1;
+                const progress = ((currentQuestion + 1) / questions.length) * 100;
+                document.getElementById('progressFill').style.width = progress + '%';
+            }
+        }
+
+        function answerQuestion(response) {
             if (gameState !== 'playing') return;
 
             const question = questions[currentQuestion];
-            answers[question.key] = response;
 
-            // تصفية الشخصيات بناءً على الإجابة
+            // تصفية الشخصيات
             if (response === 'yes') {
                 possibleCharacters = possibleCharacters.filter(char => char.traits[question.key] === true);
             } else if (response === 'no') {
                 possibleCharacters = possibleCharacters.filter(char => char.traits[question.key] === false);
             }
-            // إذا كانت الإجابة "ربما" أو "تخطي" فلا نصفي
+            // إذا كانت "ربما" أو "تخطي" لا نصفي
 
             currentQuestion++;
 
-            // تحديث شريط التقدم
-            updateProgress();
-
             // التحقق من إمكانية التخمين
-            if (possibleCharacters.length === 1 || currentQuestion >= QUESTIONS_LIMIT) {
+            if (possibleCharacters.length === 1 || currentQuestion >= questions.length) {
                 makeGuess();
+            } else if (possibleCharacters.length === 0) {
+                endGame();
             } else {
-                showNextQuestion();
+                showQuestion();
             }
-        }
-
-        function showNextQuestion() {
-            if (currentQuestion < questions.length) {
-                const question = questions[currentQuestion];
-                document.getElementById('question').textContent = question.text;
-                document.getElementById('questionNum').textContent = currentQuestion + 1;
-                document.getElementById('totalQuestions').textContent = QUESTIONS_LIMIT;
-            }
-        }
-
-        function updateProgress() {
-            const progress = (currentQuestion / QUESTIONS_LIMIT) * 100;
-            document.getElementById('progressFill').style.width = progress + '%';
         }
 
         function makeGuess() {
@@ -573,40 +549,36 @@
                 document.getElementById('guessName').textContent = character.name;
                 document.getElementById('guessEmoji').textContent = character.emoji;
             } else {
-                document.getElementById('guessName').textContent = 'شخصية غامضة جداً!';
+                document.getElementById('guessName').textContent = 'شخصية غامضة!';
                 document.getElementById('guessEmoji').textContent = '🤷‍♂️';
             }
         }
 
         function correctGuess() {
-            gameState = 'ended';
-            document.getElementById('guessArea').style.display = 'none';
-            document.getElementById('endArea').style.display = 'block';
+            endGame();
             document.getElementById('endMessage').textContent = 'رائع! لقد خمنت الشخصية بنجاح! 🎉';
         }
 
         function wrongGuess() {
-            // إزالة الشخصية الحالية من القائمة
             possibleCharacters.shift();
 
-            if (possibleCharacters.length > 0 && currentQuestion < QUESTIONS_LIMIT) {
-                // محاولة تخمين أخرى
+            if (possibleCharacters.length > 0) {
                 makeGuess();
             } else {
-                // انتهت اللعبة
-                gameState = 'ended';
-                document.getElementById('guessArea').style.display = 'none';
-                document.getElementById('endArea').style.display = 'block';
-                document.getElementById('endMessage').textContent = 'عذراً! لم أستطع تخمين الشخصية. أخبرني من كانت! 🤔';
+                endGame();
+                document.getElementById('endMessage').textContent = 'عذراً! لم أستطع تخمينها. من كانت؟ 🤔';
             }
         }
 
-        function restartGame() {
-            startGame();
+        function endGame() {
+            gameState = 'ended';
+            document.getElementById('guessArea').style.display = 'none';
+            document.getElementById('questionArea').style.display = 'none';
+            document.getElementById('endArea').style.display = 'block';
         }
 
         // بدء اللعبة
-        startGame();
+        initGame();
     </script>
 </body>
 </html>
