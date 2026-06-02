@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لعبة القفز الممتعة</title>
+    <title>لعبة القفز على الطريق</title>
     <style>
         * {
             margin: 0;
@@ -17,112 +17,298 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #1a1a1a;
             font-family: 'Arial', sans-serif;
             overflow: hidden;
         }
 
         #gameContainer {
             position: relative;
-            width: 400px;
-            height: 600px;
-            background: linear-gradient(to bottom, #87CEEB, #E0F6FF);
+            width: 600px;
+            height: 400px;
+            background: linear-gradient(to right, #87CEEB 0%, #E0F6FF 100%);
             border: 3px solid #333;
             border-radius: 10px;
             overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
         }
 
+        /* الخلفية المتحركة */
+        #background {
+            position: absolute;
+            width: 200%;
+            height: 100%;
+            top: 0;
+            left: 0;
+        }
+
+        .cloud {
+            position: absolute;
+            background: white;
+            border-radius: 50px;
+            opacity: 0.7;
+        }
+
+        .cloud::before,
+        .cloud::after {
+            content: '';
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+        }
+
+        .cloud::before {
+            width: 50px;
+            height: 50px;
+            top: -25px;
+            left: 10px;
+        }
+
+        .cloud::after {
+            width: 40px;
+            height: 40px;
+            top: -15px;
+            right: 10px;
+        }
+
+        /* الطريق */
+        #roadContainer {
+            position: absolute;
+            bottom: 100px;
+            width: 100%;
+            height: 80px;
+            background: #444;
+            border-top: 3px dashed #FFD700;
+            border-bottom: 3px dashed #FFD700;
+            overflow: hidden;
+        }
+
+        .road-line {
+            position: absolute;
+            width: 40px;
+            height: 3px;
+            background: #FFD700;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        /* الشخصية الكرتونية */
         #player {
+            position: absolute;
+            bottom: 105px;
+            left: 50px;
+            width: 40px;
+            height: 50px;
+            z-index: 10;
+        }
+
+        .player-body {
+            position: absolute;
+            width: 40px;
+            height: 35px;
+            background: #FF6B6B;
+            border-radius: 8px;
+            top: 0;
+            left: 0;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .player-head {
             position: absolute;
             width: 30px;
             height: 30px;
-            background: #FF6B6B;
+            background: #FFB86C;
             border-radius: 50%;
-            bottom: 50px;
-            left: 185px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            top: -10px;
+            left: 5px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
 
-        .platform {
+        .player-eye {
             position: absolute;
-            width: 80px;
-            height: 15px;
-            background: linear-gradient(to bottom, #4CAF50, #45a049);
-            border-radius: 7px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
-            border: 2px solid #2d8f2d;
+            width: 6px;
+            height: 6px;
+            background: #000;
+            border-radius: 50%;
+            top: 10px;
         }
 
-        .platform.moving {
-            background: linear-gradient(to bottom, #2196F3, #1976D2);
-            border-color: #0d47a1;
+        .player-eye:first-of-type {
+            left: 8px;
         }
 
-        .platform.trampoline {
-            background: linear-gradient(to bottom, #FFD700, #FFA500);
-            border-color: #FF8C00;
+        .player-eye:last-of-type {
+            right: 8px;
         }
 
-        .platform.ice {
-            background: linear-gradient(to bottom, #B0E0E6, #87CEEB);
-            border-color: #4682B4;
-        }
-
-        .enemy {
+        .player-smile {
             position: absolute;
-            width: 25px;
+            width: 10px;
+            height: 5px;
+            border: 2px solid #000;
+            border-top: none;
+            border-radius: 0 0 10px 10px;
+            bottom: 4px;
+            left: 10px;
+        }
+
+        .player-arm {
+            position: absolute;
+            width: 8px;
             height: 25px;
-            background: #FF00FF;
-            border-radius: 50%;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            background: #FFB86C;
+            border-radius: 4px;
+            top: 8px;
         }
 
+        .player-arm.left {
+            left: -5px;
+            transform-origin: top right;
+            animation: swing-left 0.3s ease-in-out;
+        }
+
+        .player-arm.right {
+            right: -5px;
+            transform-origin: top left;
+            animation: swing-right 0.3s ease-in-out;
+        }
+
+        @keyframes swing-left {
+            0%, 100% { transform: rotate(-20deg); }
+            50% { transform: rotate(20deg); }
+        }
+
+        @keyframes swing-right {
+            0%, 100% { transform: rotate(20deg); }
+            50% { transform: rotate(-20deg); }
+        }
+
+        /* العقبات (الأشجار) */
+        .obstacle {
+            position: absolute;
+            bottom: 105px;
+            width: 50px;
+            height: 60px;
+            z-index: 5;
+        }
+
+        .tree-trunk {
+            position: absolute;
+            width: 12px;
+            height: 25px;
+            background: #8B4513;
+            bottom: 0;
+            left: 19px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .tree-crown {
+            position: absolute;
+            width: 45px;
+            height: 45px;
+            background: #228B22;
+            border-radius: 50%;
+            top: 0;
+            left: 2.5px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .tree-crown::before {
+            content: '';
+            position: absolute;
+            width: 35px;
+            height: 35px;
+            background: #2ECC71;
+            border-radius: 50%;
+            top: -15px;
+            left: 5px;
+        }
+
+        .tree-crown::after {
+            content: '';
+            position: absolute;
+            width: 35px;
+            height: 35px;
+            background: #2ECC71;
+            border-radius: 50%;
+            top: -15px;
+            right: 5px;
+        }
+
+        /* النقاط */
         .coin {
             position: absolute;
-            width: 15px;
-            height: 15px;
+            bottom: 105px;
+            width: 20px;
+            height: 20px;
             background: #FFD700;
             border-radius: 50%;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-            animation: spin 0.5s linear infinite;
+            border: 2px solid #FFA500;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+            z-index: 3;
+            animation: float 0.6s ease-in-out forwards;
         }
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        @keyframes float {
+            0% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-60px);
+            }
         }
 
-        #gameOver {
+        /* الواجهة */
+        #ui {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            color: #000;
+            font-weight: bold;
+            font-size: 20px;
+            z-index: 100;
+            text-align: right;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 10px 15px;
+            border-radius: 5px;
+        }
+
+        .score-item {
+            margin: 5px 0;
+        }
+
+        #gameOverScreen {
             display: none;
             position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0, 0, 0, 0.9);
-            color: white;
-            padding: 40px;
-            border-radius: 10px;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 200;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
             text-align: center;
-            z-index: 100;
-            min-width: 250px;
+            color: white;
         }
 
-        #gameOver h1 {
-            font-size: 32px;
+        #gameOverScreen h1 {
+            font-size: 48px;
             margin-bottom: 20px;
+            color: #FFD700;
         }
 
-        #gameOver p {
-            font-size: 20px;
+        #gameOverScreen p {
+            font-size: 24px;
             margin: 10px 0;
         }
 
-        #gameOver button {
-            margin-top: 20px;
-            padding: 10px 30px;
-            font-size: 18px;
-            background: #FF6B6B;
+        #gameOverScreen button {
+            margin-top: 30px;
+            padding: 15px 40px;
+            font-size: 20px;
+            background: #4CAF50;
             color: white;
             border: none;
             border-radius: 5px;
@@ -130,23 +316,8 @@
             transition: background 0.3s;
         }
 
-        #gameOver button:hover {
-            background: #FF5252;
-        }
-
-        #ui {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            color: #333;
-            font-weight: bold;
-            font-size: 18px;
-            z-index: 10;
-            text-align: right;
-        }
-
-        .score-item {
-            margin: 5px 0;
+        #gameOverScreen button:hover {
+            background: #45a049;
         }
 
         #startScreen {
@@ -192,33 +363,86 @@
 
         .instructions {
             color: #FFD700;
-            font-size: 14px;
+            font-size: 16px;
             margin-top: 20px;
+        }
+
+        @media (max-width: 768px) {
+            #gameContainer {
+                width: 100%;
+                height: 100%;
+                border-radius: 0;
+            }
         }
     </style>
 </head>
 <body>
     <div id="gameContainer">
+        <!-- الخلفية -->
+        <div id="background">
+            <svg width="600" height="400" style="position: absolute; left: 0; top: 0;">
+                <defs>
+                    <linearGradient id="skyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" style="stop-color:#87CEEB;stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:#E0F6FF;stop-opacity:1" />
+                    </linearGradient>
+                </defs>
+                <rect width="600" height="400" fill="url(#skyGrad)"/>
+            </svg>
+            <!-- الغيوم -->
+            <div class="cloud" style="width: 80px; height: 30px; top: 30px; left: 50px;"></div>
+            <div class="cloud" style="width: 100px; height: 35px; top: 80px; right: 80px;"></div>
+            <div class="cloud" style="width: 70px; height: 28px; top: 50px; left: 350px;"></div>
+        </div>
+
+        <!-- الطريق -->
+        <div id="roadContainer">
+            <div class="road-line" style="left: 0;"></div>
+            <div class="road-line" style="left: 50px;"></div>
+            <div class="road-line" style="left: 100px;"></div>
+            <div class="road-line" style="left: 150px;"></div>
+            <div class="road-line" style="left: 200px;"></div>
+            <div class="road-line" style="left: 250px;"></div>
+            <div class="road-line" style="left: 300px;"></div>
+            <div class="road-line" style="left: 350px;"></div>
+            <div class="road-line" style="left: 400px;"></div>
+            <div class="road-line" style="left: 450px;"></div>
+            <div class="road-line" style="left: 500px;"></div>
+            <div class="road-line" style="left: 550px;"></div>
+        </div>
+
+        <!-- الشخصية -->
+        <div id="player">
+            <div class="player-head">
+                <div class="player-eye"></div>
+                <div class="player-eye"></div>
+                <div class="player-smile"></div>
+            </div>
+            <div class="player-body">
+                <div class="player-arm left"></div>
+                <div class="player-arm right"></div>
+            </div>
+        </div>
+
+        <!-- الواجهة -->
+        <div id="ui">
+            <div class="score-item">النقاط: <span id="score">0</span></div>
+            <div class="score-item">المسافة: <span id="distance">0</span> م</div>
+        </div>
+
+        <!-- شاشة البداية -->
         <div id="startScreen">
-            <h1>🎮 لعبة القفز</h1>
-            <p>اقفز على المنصات وتجنب الأعداء!</p>
-            <p>اجمع النقود للحصول على نقاط إضافية</p>
-            <p class="instructions">استخدم الأسهم ← → للتحكم</p>
+            <h1>🏃 لعبة القفز</h1>
+            <p>تجنب الأشجار واقفز عالياً!</p>
+            <p class="instructions">👆 اضغط على الشاشة أو اضغط مفتاح Space للقفز</p>
             <button onclick="startGame()">ابدأ اللعبة</button>
         </div>
 
-        <div id="ui">
-            <div class="score-item">النقاط: <span id="score">0</span></div>
-            <div class="score-item">المستوى: <span id="level">1</span></div>
-            <div class="score-item">الارتفاع: <span id="height">0</span></div>
-        </div>
-
-        <div id="player"></div>
-
-        <div id="gameOver">
+        <!-- شاشة اللعبة المنتهية -->
+        <div id="gameOverScreen">
             <h1>انتهت اللعبة! 💀</h1>
             <p>النقاط النهائية: <span id="finalScore">0</span></p>
-            <p>أعلى ارتفاع: <span id="maxHeight">0</span></p>
+            <p>المسافة: <span id="finalDistance">0</span> م</p>
             <button onclick="location.reload()">لعب مرة أخرى</button>
         </div>
     </div>
@@ -226,332 +450,244 @@
     <script>
         const gameContainer = document.getElementById('gameContainer');
         const player = document.getElementById('player');
-        const gameOverScreen = document.getElementById('gameOver');
+        const gameOverScreen = document.getElementById('gameOverScreen');
         const startScreen = document.getElementById('startScreen');
         const scoreDisplay = document.getElementById('score');
-        const levelDisplay = document.getElementById('level');
-        const heightDisplay = document.getElementById('height');
+        const distanceDisplay = document.getElementById('distance');
+        const roadContainer = document.getElementById('roadContainer');
 
         let gameActive = false;
-        let playerX = 185;
-        let playerY = 550;
-        let playerVelocityX = 0;
+        let isJumping = false;
+        let playerY = 0;
         let playerVelocityY = 0;
         let score = 0;
-        let level = 1;
-        let maxHeight = 0;
-        let platforms = [];
-        let enemies = [];
+        let distance = 0;
+        let obstacles = [];
         let coins = [];
-        let gameSpeed = 5;
-        let platformSpacing = 70;
+        let roadX = 0;
 
         const GRAVITY = 0.6;
-        const JUMP_STRENGTH = 12;
-        const MOVE_SPEED = 5;
-        const CONTAINER_WIDTH = 400;
-        const CONTAINER_HEIGHT = 600;
-        const PLAYER_SIZE = 30;
+        const JUMP_STRENGTH = 15;
+        const GAME_SPEED = 6;
+        const PLAYER_SIZE = 40;
+        const CONTAINER_WIDTH = 600;
+        const CONTAINER_HEIGHT = 400;
+        const ROAD_Y = 100;
 
-        class Platform {
-            constructor(x, y, type = 'normal') {
-                this.x = x;
-                this.y = y;
-                this.width = 80;
-                this.height = 15;
-                this.type = type;
-                this.direction = Math.random() > 0.5 ? 1 : -1;
-                this.speed = type === 'moving' ? 2 : 0;
-                this.element = document.createElement('div');
-                this.element.className = 'platform ' + type;
-                this.element.style.left = x + 'px';
-                this.element.style.top = y + 'px';
-                gameContainer.appendChild(this.element);
-            }
-
-            update() {
-                if (this.type === 'moving') {
-                    this.x += this.speed * this.direction;
-                    if (this.x <= 0 || this.x + this.width >= CONTAINER_WIDTH) {
-                        this.direction *= -1;
-                    }
-                    this.element.style.left = this.x + 'px';
-                }
-
-                if (this.type === 'ice') {
-                    this.element.style.opacity = 0.7 + Math.sin(Date.now() / 200) * 0.3;
-                }
-            }
-
-            draw() {
-                this.element.style.left = this.x + 'px';
-                this.element.style.top = this.y + 'px';
-            }
-
-            remove() {
-                this.element.remove();
-            }
-        }
-
-        class Enemy {
-            constructor(x, y) {
-                this.x = x;
-                this.y = y;
-                this.width = 25;
-                this.height = 25;
-                this.direction = Math.random() > 0.5 ? 1 : -1;
-                this.speed = 2 + level * 0.5;
-                this.element = document.createElement('div');
-                this.element.className = 'enemy';
-                this.element.style.left = x + 'px';
-                this.element.style.top = y + 'px';
-                gameContainer.appendChild(this.element);
-            }
-
-            update() {
-                this.x += this.speed * this.direction;
-                if (this.x <= 0 || this.x + this.width >= CONTAINER_WIDTH) {
-                    this.direction *= -1;
-                }
-                this.element.style.left = this.x + 'px';
-            }
-
-            remove() {
-                this.element.remove();
-            }
-        }
-
-        class Coin {
-            constructor(x, y) {
-                this.x = x;
-                this.y = y;
-                this.width = 15;
-                this.height = 15;
-                this.collected = false;
-                this.element = document.createElement('div');
-                this.element.className = 'coin';
-                this.element.style.left = x + 'px';
-                this.element.style.top = y + 'px';
-                gameContainer.appendChild(this.element);
-            }
-
-            update() {
-                this.element.style.top = this.y + 'px';
-            }
-
-            remove() {
-                this.element.remove();
-            }
-        }
+        let nextObstacleTime = 0;
+        let nextCoinTime = 0;
 
         function startGame() {
             startScreen.style.display = 'none';
             gameActive = true;
             gameOverScreen.style.display = 'none';
             score = 0;
-            level = 1;
-            playerY = 550;
+            distance = 0;
+            playerY = 0;
             playerVelocityY = 0;
-            maxHeight = 0;
-
-            // مسح جميع العناصر
-            platforms.forEach(p => p.remove());
-            enemies.forEach(e => e.remove());
-            coins.forEach(c => c.remove());
-            platforms = [];
-            enemies = [];
+            roadX = 0;
+            obstacles = [];
             coins = [];
-
-            // إنشاء المنصات الأولية
-            for (let i = 0; i < 15; i++) {
-                const y = CONTAINER_HEIGHT - i * platformSpacing;
-                const x = Math.random() * (CONTAINER_WIDTH - 80);
-                const rand = Math.random();
-                let type = 'normal';
-                if (rand > 0.7) type = 'moving';
-                else if (rand > 0.5) type = 'trampoline';
-                else if (rand > 0.3) type = 'ice';
-
-                platforms.push(new Platform(x, y, type));
-
-                if (Math.random() > 0.7) {
-                    coins.push(new Coin(x + 30, y - 30));
-                }
-            }
+            nextObstacleTime = 120;
+            nextCoinTime = 80;
 
             gameLoop();
         }
 
-        function handleInput(e) {
+        function handleJump(e) {
             if (!gameActive) return;
-
-            if (e.key === 'ArrowLeft') {
-                playerVelocityX = -MOVE_SPEED;
-            } else if (e.key === 'ArrowRight') {
-                playerVelocityX = MOVE_SPEED;
-            }
-        }
-
-        function handleInputUp(e) {
-            if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
-                playerVelocityX = 0;
+            if (e.type === 'touchstart' || e.code === 'Space') {
+                e.preventDefault();
+                if (!isJumping) {
+                    playerVelocityY = -JUMP_STRENGTH;
+                    isJumping = true;
+                }
             }
         }
 
         function updatePlayer() {
-            playerX += playerVelocityX;
             playerVelocityY += GRAVITY;
             playerY += playerVelocityY;
 
-            // التحكم بحدود اللعبة الأفقية
-            if (playerX < 0) playerX = 0;
-            if (playerX + PLAYER_SIZE > CONTAINER_WIDTH) playerX = CONTAINER_WIDTH - PLAYER_SIZE;
-
-            // حلقة الشاشة العمودية
-            if (playerY > CONTAINER_HEIGHT) {
-                gameOver();
+            // منطق الوقوف على الطريق
+            const roadBottomY = ROAD_Y - PLAYER_SIZE - 10;
+            if (playerY > 0) {
+                playerY = 0;
+                playerVelocityY = 0;
+                isJumping = false;
             }
 
-            player.style.left = playerX + 'px';
-            player.style.top = playerY + 'px';
+            if (playerY > roadBottomY) {
+                playerY = 0;
+                playerVelocityY = 0;
+                isJumping = false;
+            }
 
-            // تحديث الارتفاع
-            let currentHeight = Math.max(0, Math.round((CONTAINER_HEIGHT - playerY) / 10));
-            heightDisplay.textContent = currentHeight;
-            maxHeight = Math.max(maxHeight, currentHeight);
+            player.style.transform = `translateY(${playerY}px)`;
         }
 
-        function checkCollisions() {
-            // فحص الاصطدام مع المنصات
-            platforms.forEach(platform => {
-                if (playerVelocityY > 0 &&
-                    playerY + PLAYER_SIZE >= platform.y &&
-                    playerY + PLAYER_SIZE <= platform.y + platform.height + 5 &&
-                    playerX + PLAYER_SIZE > platform.x &&
-                    playerX < platform.x + platform.width) {
+        function updateObstacles() {
+            nextObstacleTime--;
+            if (nextObstacleTime <= 0) {
+                createObstacle();
+                nextObstacleTime = 80 + Math.random() * 40;
+            }
 
-                    if (platform.type === 'trampoline') {
-                        playerVelocityY = -JUMP_STRENGTH * 1.5;
-                        score += 5;
-                    } else if (platform.type === 'ice') {
-                        playerVelocityY = -JUMP_STRENGTH * 0.7;
-                        playerVelocityX *= 1.2;
-                    } else {
-                        playerVelocityY = -JUMP_STRENGTH;
-                    }
-                }
-            });
+            obstacles.forEach((obstacle, index) => {
+                obstacle.x -= GAME_SPEED;
+                obstacle.element.style.left = obstacle.x + 'px';
 
-            // فحص الاصطدام مع الأعداء
-            enemies.forEach(enemy => {
-                if (playerX < enemy.x + enemy.width &&
-                    playerX + PLAYER_SIZE > enemy.x &&
-                    playerY < enemy.y + enemy.height &&
-                    playerY + PLAYER_SIZE > enemy.y) {
+                // فحص الاصطدام
+                if (checkCollision(obstacle)) {
                     gameOver();
                 }
-            });
 
-            // فحص جمع النقود
-            coins.forEach(coin => {
-                if (!coin.collected &&
-                    playerX < coin.x + coin.width &&
-                    playerX + PLAYER_SIZE > coin.x &&
-                    playerY < coin.y + coin.height &&
-                    playerY + PLAYER_SIZE > coin.y) {
-                    coin.collected = true;
-                    coin.remove();
-                    score += 10;
+                // إزالة العقبات البعيدة
+                if (obstacle.x < -60) {
+                    obstacle.element.remove();
+                    obstacles.splice(index, 1);
                 }
             });
         }
 
-        function updatePlatforms() {
-            platforms.forEach(platform => {
-                platform.update();
+        function updateCoins() {
+            nextCoinTime--;
+            if (nextCoinTime <= 0) {
+                createCoin();
+                nextCoinTime = 100 + Math.random() * 60;
+            }
 
-                // إزالة المنصات البعيدة جداً
-                if (platform.y > CONTAINER_HEIGHT + 50) {
-                    platform.remove();
-                    platforms = platforms.filter(p => p !== platform);
+            coins.forEach((coin, index) => {
+                coin.x -= GAME_SPEED;
+                coin.element.style.left = coin.x + 'px';
 
-                    // إضافة منصة جديدة في الأعلى
-                    const newY = Math.min(...platforms.map(p => p.y)) - platformSpacing;
-                    const newX = Math.random() * (CONTAINER_WIDTH - 80);
-                    const rand = Math.random();
-                    let type = 'normal';
-                    if (rand > 0.7) type = 'moving';
-                    else if (rand > 0.5) type = 'trampoline';
-                    else if (rand > 0.3) type = 'ice';
-
-                    platforms.push(new Platform(newX, newY, type));
-
-                    if (Math.random() > 0.7) {
-                        coins.push(new Coin(newX + 30, newY - 30));
-                    }
-
-                    // زيادة الصعوبة
-                    level = Math.floor(score / 50) + 1;
-                    if (level > 1 && Math.random() > 0.8) {
-                        const enemyX = Math.random() * (CONTAINER_WIDTH - 25);
-                        enemies.push(new Enemy(enemyX, newY - 80));
-                    }
+                // فحص جمع النقود
+                if (checkCoinCollision(coin)) {
+                    score += 10;
+                    coin.element.remove();
+                    coins.splice(index, 1);
+                } else if (coin.x < -30) {
+                    coin.element.remove();
+                    coins.splice(index, 1);
                 }
             });
+        }
 
-            // تحديث الأعداء
-            enemies.forEach(enemy => {
-                enemy.update();
-            });
+        function updateRoad() {
+            roadX -= GAME_SPEED;
+            if (roadX <= -50) {
+                roadX = 0;
+            }
 
-            // إزالة الأعداء البعيدة
-            enemies = enemies.filter(e => {
-                if (e.y > CONTAINER_HEIGHT + 50) {
-                    e.remove();
-                    return false;
-                }
-                return true;
+            const roadLines = roadContainer.querySelectorAll('.road-line');
+            roadLines.forEach(line => {
+                line.style.left = (parseInt(line.style.left) + roadX) + 'px';
             });
+        }
 
-            // تحديث النقود
-            coins.forEach(coin => {
-                coin.update();
-            });
+        function createObstacle() {
+            const obstacle = {
+                x: CONTAINER_WIDTH,
+                width: 50,
+                height: 60,
+                element: document.createElement('div')
+            };
 
-            coins = coins.filter(c => {
-                if (c.y > CONTAINER_HEIGHT + 50) {
-                    c.remove();
-                    return false;
-                }
-                return true;
-            });
+            obstacle.element.className = 'obstacle';
+            obstacle.element.innerHTML = `
+                <div class="tree-trunk"></div>
+                <div class="tree-crown"></div>
+            `;
+            obstacle.element.style.left = obstacle.x + 'px';
+            gameContainer.appendChild(obstacle.element);
+
+            obstacles.push(obstacle);
+        }
+
+        function createCoin() {
+            const coin = {
+                x: CONTAINER_WIDTH,
+                width: 20,
+                height: 20,
+                y: Math.random() * 150 + 80,
+                element: document.createElement('div')
+            };
+
+            coin.element.className = 'coin';
+            coin.element.style.left = coin.x + 'px';
+            coin.element.style.bottom = coin.y + 'px';
+            gameContainer.appendChild(coin.element);
+
+            coins.push(coin);
+        }
+
+        function checkCollision(obstacle) {
+            const playerLeft = 50;
+            const playerRight = playerLeft + PLAYER_SIZE;
+            const playerTop = ROAD_Y - PLAYER_SIZE + playerY - 10;
+            const playerBottom = ROAD_Y + playerY - 10;
+
+            const obstacleLeft = obstacle.x;
+            const obstacleRight = obstacle.x + obstacle.width;
+            const obstacleTop = ROAD_Y - obstacle.height - 10;
+            const obstacleBottom = ROAD_Y - 10;
+
+            return !(playerRight < obstacleLeft ||
+                    playerLeft > obstacleRight ||
+                    playerBottom < obstacleTop ||
+                    playerTop > obstacleBottom);
+        }
+
+        function checkCoinCollision(coin) {
+            const playerLeft = 50;
+            const playerRight = playerLeft + PLAYER_SIZE;
+            const playerTop = ROAD_Y - PLAYER_SIZE + playerY - 10;
+            const playerBottom = ROAD_Y + playerY - 10;
+
+            const coinLeft = coin.x;
+            const coinRight = coin.x + coin.width;
+            const coinTop = coin.y;
+            const coinBottom = coin.y + coin.height;
+
+            return !(playerRight < coinLeft ||
+                    playerLeft > coinRight ||
+                    playerBottom < coinTop ||
+                    playerTop > coinBottom);
         }
 
         function updateUI() {
             scoreDisplay.textContent = score;
-            levelDisplay.textContent = level;
+            distance = Math.floor(distance + GAME_SPEED / 10);
+            distanceDisplay.textContent = distance;
         }
 
         function gameOver() {
             gameActive = false;
             gameOverScreen.style.display = 'flex';
             document.getElementById('finalScore').textContent = score;
-            document.getElementById('maxHeight').textContent = maxHeight;
+            document.getElementById('finalDistance').textContent = distance;
         }
 
         function gameLoop() {
             if (!gameActive) return;
 
             updatePlayer();
-            checkCollisions();
-            updatePlatforms();
+            updateObstacles();
+            updateCoins();
+            updateRoad();
             updateUI();
 
             requestAnimationFrame(gameLoop);
         }
 
-        document.addEventListener('keydown', handleInput);
-        document.addEventListener('keyup', handleInputUp);
+        document.addEventListener('touchstart', handleJump);
+        document.addEventListener('keydown', handleJump);
+        gameContainer.addEventListener('click', () => {
+            if (gameActive && !isJumping) {
+                playerVelocityY = -JUMP_STRENGTH;
+                isJumping = true;
+            }
+        });
     </script>
 </body>
 </html>
